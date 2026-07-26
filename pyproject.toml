@@ -29,7 +29,7 @@ dev = ["pytest>=7.0", "pytest-mock>=3.10", "mypy>=1.0"]
 
 [project.urls]
 Homepage = "https://envello.dev"
-Repository = "https://github.com/Aktai-ltd/envello-python"
+Repository = "https://github.com/Bergblumestudio/envello-python"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/envello"]
