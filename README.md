@@ -41,7 +41,9 @@ with Envello(api_key="env_test_xxx") as client:
 
 - `api_key` — your `env_live_...` or `env_test_...` key. Required.
 - `base_url` — override for self-hosted or local dev (e.g.
-  `http://localhost:3000`).
+  `http://localhost:3000`). Must be `https`; plain `http` is only accepted
+  for `localhost`, `127.0.0.1` and `[::1]`. Anything else raises
+  `EnvelloError` so the API key never goes out unencrypted.
 - `timeout` — request timeout in seconds.
 - `http_client` — inject your own `httpx.Client` (used by the test suite to
   mock the network layer without hitting a real server).
