@@ -8,14 +8,36 @@ without swapping libraries. See README.md's "Why httpx" section.
 from __future__ import annotations
 
 from typing import Any, Dict, Optional, cast
+from urllib.parse import urlsplit
 
 import httpx
 
-from .exceptions import AuthenticationError, EnvelloAPIError, RateLimitedError
+from .exceptions import AuthenticationError, EnvelloAPIError, EnvelloError, RateLimitedError
 from .resources.emails import EmailsResource
 
 DEFAULT_BASE_URL = "https://api.envello.dev"
 DEFAULT_TIMEOUT = 10.0
+
+INSECURE_BASE_URL_MESSAGE = "The API URL must use https (http is only allowed for localhost)."
+LOOPBACK_HOSTS = ("localhost", "127.0.0.1", "::1")
+
+
+def _validate_base_url(base_url: str) -> None:
+    """Refuse to send the API key over plain http to anything but loopback."""
+    try:
+        parts = urlsplit(base_url)
+        # urlsplit lowercases and strips IPv6 brackets ("[::1]" -> "::1").
+        hostname = parts.hostname
+    except ValueError as error:
+        raise EnvelloError(INSECURE_BASE_URL_MESSAGE) from error
+    scheme = parts.scheme.lower()
+    if not hostname:
+        raise EnvelloError(INSECURE_BASE_URL_MESSAGE)
+    if scheme == "https":
+        return
+    if scheme == "http" and hostname in LOOPBACK_HOSTS:
+        return
+    raise EnvelloError(INSECURE_BASE_URL_MESSAGE)
 
 
 class Envello:
@@ -41,6 +63,10 @@ class Envello:
     ) -> None:
         if not api_key:
             raise ValueError("api_key is required")
+        _validate_base_url(base_url)
+        # Requests go to the injected client's own base_url, so check that too.
+        if http_client is not None and str(http_client.base_url):
+            _validate_base_url(str(http_client.base_url))
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self._client = http_client or httpx.Client(base_url=self.base_url, timeout=timeout)
