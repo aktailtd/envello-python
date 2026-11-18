@@ -28,5 +28,5 @@ python3 -m venv /tmp/v && /tmp/v/bin/pip install -e ".[dev]"
 
 ## Gotchas
 - The repo has no ruff config. A user-level ruff config flags many pre-existing `Optional`/`Dict` usages in other files; only the new files were checked (`ruff check` clean). `ruff format` was not applied, to keep the existing file style.
-- The API's own `verifySignatureHeader` keeps only the last `v1` in the header (its reducer overwrites earlier ones). The SDK accepts any `v1`, per the spec. Worth aligning the server-side helper if it's ever used for rotation.
+- Like the API's own `verifySignatureHeader` (`webhook-signing.ts`, which collects every `v1`), the SDK accepts a match on any `v1`.
 - `__version__` in `__init__.py` says `0.1.0` while `pyproject.toml` says `0.1.1`. Pre-existing, left alone.
