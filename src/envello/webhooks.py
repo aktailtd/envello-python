@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import math
 import time
 
 DEFAULT_TOLERANCE_SECONDS = 300
@@ -59,7 +60,12 @@ def verify_webhook(
     the JSON changes the bytes and the signature will not match. Malformed or
     missing headers return False; this never raises for bad input.
     """
-    if not header:
+    # An empty secret (unset env var) would verify headers signed with an
+    # empty key. Wrong types return False instead of raising.
+    if not isinstance(secret, str) or not secret or not isinstance(header, str) or not header:
+        return False
+    # NaN compares false against everything, which would switch the replay check off.
+    if not _is_finite(tolerance_seconds) or tolerance_seconds < 0 or (now is not None and not _is_finite(now)):
         return False
     parsed = _parse_header(header)
     if parsed is None:
@@ -89,3 +95,7 @@ def verify_webhook(
         candidate = signature.encode("utf-8", errors="replace")
         matched |= hmac.compare_digest(expected, candidate)
     return matched
+
+
+def _is_finite(value: object) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)

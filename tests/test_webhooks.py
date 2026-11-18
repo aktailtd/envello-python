@@ -91,3 +91,22 @@ def test_bytes_and_str_bodies_match() -> None:
 def test_uses_current_time_when_now_omitted() -> None:
     # The vector's timestamp is far from the real clock, so it must be stale.
     assert verify_webhook(SECRET, BODY, HEADER) is False
+
+
+def test_empty_secret_never_verifies() -> None:
+    empty_key_signature = "73457d45da4254428de731ff81d20dd03d432f84fef02aead38b2fa7c7cd5c77"
+    assert verify_webhook("", BODY, f"t={TIMESTAMP},v1={empty_key_signature}", now=TIMESTAMP) is False
+
+
+@pytest.mark.parametrize("tolerance", [float("nan"), float("inf"), -1])
+def test_bad_tolerance_fails_closed(tolerance: float) -> None:
+    assert verify_webhook(SECRET, BODY, HEADER, tolerance_seconds=tolerance, now=TIMESTAMP + 10**7) is False  # type: ignore[arg-type]
+
+
+def test_nan_now_fails_closed() -> None:
+    assert verify_webhook(SECRET, BODY, HEADER, now=float("nan")) is False  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("secret, header", [(None, HEADER), (SECRET, ["t=1"]), (123, HEADER)])
+def test_wrong_types_return_false(secret: object, header: object) -> None:
+    assert verify_webhook(secret, BODY, header, now=TIMESTAMP) is False  # type: ignore[arg-type]
