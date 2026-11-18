@@ -25,6 +25,7 @@ from .types import (
     UrlAttachment,
     ValidateEmailResponse,
 )
+from .webhooks import verify_webhook
 
 __version__ = "0.1.0"
 
@@ -46,5 +47,6 @@ __all__ = [
     "GetEmailResponse",
     "CancelEmailResponse",
     "ValidateEmailResponse",
+    "verify_webhook",
     "__version__",
 ]

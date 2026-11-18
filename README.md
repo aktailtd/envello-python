@@ -89,6 +89,43 @@ hasn't fired yet.
 Maps to `POST /emails/validate`. Free on every plan (still requires a
 valid API key).
 
+## Verifying webhooks
+
+Every webhook request carries an `Envello-Signature` header. Check it with
+`verify_webhook` before trusting the payload:
+
+```python
+from flask import Flask, abort, request
+
+from envello import verify_webhook
+
+app = Flask(__name__)
+WEBHOOK_SECRET = "whsec_..."  # the endpoint's signing secret, prefix included
+
+
+@app.post("/webhooks/envello")
+def envello_webhook():
+    raw_body = request.get_data()  # raw bytes, before any JSON parsing
+    if not verify_webhook(WEBHOOK_SECRET, raw_body, request.headers.get("Envello-Signature")):
+        abort(400)
+    event = request.get_json()
+    ...
+    return "", 204
+```
+
+Pass the **raw request body** exactly as received. If you parse the JSON
+and serialize it again, the bytes change and the signature won't match.
+`bytes` and `str` bodies both work.
+
+`verify_webhook(secret, raw_body, header, *, tolerance_seconds=300, now=None) -> bool`
+
+- Returns `False` (never raises) for a missing or malformed header, a wrong
+  signature, or a timestamp more than `tolerance_seconds` away from now in
+  either direction (replay protection).
+- During secret rotation the header carries several `v1=` values; a match
+  on any of them passes.
+- `now` overrides the current Unix time, mainly for tests.
+
 ## Errors
 
 Non-2xx responses raise `EnvelloAPIError` (or a subclass):
