@@ -76,7 +76,7 @@ class Envello:
         self._default_headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "User-Agent": "envello-python/0.1.0",
+            "User-Agent": "envello-python/0.2.0",
         }
         self.emails = EmailsResource(self)
 
